@@ -35,7 +35,7 @@ from operator import itemgetter
 import pickle
 import warnings
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.mixture import *
+from sklearn.mixture import GaussianMixture
 
 # dir = '/home/shaique/Desktop/Shaique/mfcc_d_dd'
 
@@ -43,26 +43,45 @@ from sklearn.mixture import *
 
 # files = os.listdir(dir)
 
-dir = 'C:/Users/Spirelab/Desktop/Breath_gender/only_breath_audios'
+dir = 'C:/Users/Spirelab/Desktop/Breath_Diarization/only_breath_audios'
 
 os.chdir(dir)
+
+segLen,frameRate,numMix = 3,50,128
 
 #os.chdir(dir)
 
 breath_files = os.listdir(dir)
 
+
+
+def VoiceActivityDetection(wavData, frameRate):
+    # uses the librosa library to compute short-term energy
+    ste = librosa.feature.rms(wavData,hop_length=int(16000/frameRate)).T
+    thresh = 0.1*(np.percentile(ste,97.5) + 9*np.percentile(ste,2.5))    # Trim 5% off and set threshold as 0.1x of the ste range
+    return (ste>thresh).astype('bool')
+
+
 file = breath_files[3]
 
 wavData,fs = librosa.load(file, sr = None)
 
-ste = librosa.feature.rms(wavData,hop_length=int(16000/fs)).T
+vad=VoiceActivityDetection(wavData,frameRate)
+     
+mfcc = librosa.feature.mfcc(wavData, sr=16000, n_mfcc=20,hop_length=int(16000/frameRate)).T
+vad = np.reshape(vad,(len(vad),))
+if mfcc.shape[0] > vad.shape[0]:
+    vad = np.hstack((vad,np.zeros(mfcc.shape[0] - vad.shape[0]).astype('bool'))).astype('bool')
+elif mfcc.shape[0] < vad.shape[0]:
+    vad = vad[:mfcc.shape[0]]
+mfcc = mfcc[vad,:];
 
-thresh = 0.01*(np.percentile(ste,97.5) + 9*np.percentile(ste,2.5)) 
-   # Trim 5% off and set threshold as 0.1x of the ste range
-indices = (ste>thresh).astype(float)
+n_components = np.arange(1, 21)
 
-plot(wavData)
+models = [GaussianMixture(n, covariance_type='full', random_state=0).fit(mfcc) for n in n_components]
 
-plot(indices)
-
-
+plt.figure(figsize=(15, 10))
+plt.plot(n_components, [m.bic(mfcc) for m in models], label='BIC')
+plt.plot(n_components, [m.aic(mfcc) for m in models], label='AIC')
+plt.legend(loc='best')
+plt.xlabel('GMM n_components for an audio file');
