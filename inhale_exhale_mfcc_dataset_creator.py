@@ -29,11 +29,11 @@ from operator import itemgetter
 
 #os.chdir('C:/Users/Spirelab/Desktop/Breath_gender/Shivani_data')
 
-dir = 'C:/Users/Spirelab/Desktop/Breath_gender/Shivani_data/test_recs'
+dir = 'C:/Users/Spirelab/Desktop/Breath_Diarization/test'
 
 os.chdir(dir)
 
-mfcc_store_dir = 'C:/Users/Spirelab/Desktop/Breath_Diarization/mfcc_d_dd_ii_xx'
+mfcc_store_dir = 'C:/Users/Spirelab/Desktop/Breath_Diarization/test_mfcc'
 
 files = os.listdir(dir)
 
@@ -76,7 +76,7 @@ for j in tqdm(wav_files) :
     
     ###Inhale DF###
     
-    ii_idx = [i for i in range(len(phon_col)) if "Inhale" in phon_col[i]]
+    ii_idx = [i for i in range(len(phon_col)) if "ii" in phon_col[i]]
     
     ii_st_idx = st_col[ii_idx]
     
@@ -86,10 +86,10 @@ for j in tqdm(wav_files) :
     
     ii_end_sam = list(np.ceil(ii_end_idx*fs))
     
-    ii_st_sam = [int(i) for i in ii_st_idx]
+    #ii_st_sam = [int(i) for i in ii_st_idx]
     
     ###Exhale DF###
-    xx_idx = [j for j in range(len(phon_col)) if "Exhale" in phon_col[j]]
+    xx_idx = [j for j in range(len(phon_col)) if "xx" in phon_col[j]]
     
     xx_st_idx = st_col[xx_idx]
     
@@ -99,7 +99,7 @@ for j in tqdm(wav_files) :
     
     xx_end_sam = list(np.ceil(xx_end_idx*fs))
     
-    xx_st_sam = [int(j) for j in xx_st_idx]    
+    #xx_st_sam = [int(j) for j in xx_st_idx]    
     
     
     
@@ -116,9 +116,9 @@ for j in tqdm(wav_files) :
         
         ii_chunk = audio_file[int(ii_st_sam[k]) : int(ii_end_sam[k])]
         
-        mfcc_ii = librosa.feature.mfcc(ii_chunk , sr = fs , n_mfcc = 13 , n_fft = 320 , win_length = 320 , hop_length = 160)
+        mfcc_ii = librosa.feature.mfcc(ii_chunk , sr = fs , n_mfcc = 13 , win_length = 320 , hop_length = 160)
                 
-        ii_chunk_mfcc_df = np.array(np.transpose(librosa.feature.mfcc(ii_chunk , sr = fs , n_mfcc = 13 , n_fft = 320 , win_length = 320 , hop_length = 160)))
+        ii_chunk_mfcc_df = np.array(np.transpose(mfcc_ii))
         
         delta = np.array(np.transpose(librosa.feature.delta(mfcc_ii)))
         
@@ -158,9 +158,9 @@ for j in tqdm(wav_files) :
         
         xx_chunk = audio_file[int(xx_st_sam[q]) : int(xx_end_sam[q])]
         
-        mfcc_xx = librosa.feature.mfcc(xx_chunk , sr = fs , n_mfcc = 13 , n_fft = 320 , win_length = 320 , hop_length = 160)
-                
-        xx_chunk_mfcc_df = np.array(np.transpose(librosa.feature.mfcc(xx_chunk , sr = fs , n_mfcc = 13 , n_fft = 320 , win_length = 320 , hop_length = 160)))
+        mfcc_xx = librosa.feature.mfcc(xx_chunk , sr = fs , n_mfcc = 13 , win_length = 320 , hop_length = 160)
+        
+        xx_chunk_mfcc_df = np.array(np.transpose(mfcc_xx))
         
         delta = np.array(np.transpose(librosa.feature.delta(mfcc_xx)))
         
@@ -191,7 +191,6 @@ for j in tqdm(wav_files) :
     sub_ii_xx_mfcc_df = pd.concat([sub_ii_mfcc_df , sub_xx_mfcc_df], axis = 0)
     
     sub_ii_xx_mfcc_df = sub_ii_xx_mfcc_df.sort_values(by = ['phon_idx'])
-    
     
     mfcc_name = j[0 : -4] + '_iixx_d_dd''.csv'
     
